@@ -1,0 +1,133 @@
+---
+title: An R Markdown document converted from "hw1.ipynb"
+output: html_document
+---
+
+# Start fresh
+code for starting fresh?
+```{r}
+rm(list = ls()) # clears the workspace by removing all existing objects
+```
+
+# get the data
+
+code for opening a file from a url (file in Excel), name it 'fragility23'?
+```{r}
+linkGit="https://github.com/FundamentalsRudraksh/hw1/raw/refs/heads/main/FSI-2023-DOWNLOAD.xlsx"
+# Stores the link from the git
+
+#install.packages('rio') # install the package
+library(rio) # load the package to use it
+fragility23=rio::import(file = linkGit) #object that will hold the result from URL
+```
+```{r}
+fragility23 # prints the data
+```
+
+# exploratory commands
+
+find out column names in 'fragility23'?
+```{r}
+names(x = fragility23) # Displays the column names
+```
+
+Check the data types in df?
+```{r}
+str(object = fragility23) # Shows the structure of fragility23 like variable types, preview etc
+```
+
+show me the first 10 rows?
+```{r}
+head(x = fragility23,10) # Shows the first 10 rows
+```
+
+show me the last 10 rows?
+```{r}
+tail(fragility23,10) # Shows the last 10 rows
+```
+
+# transformative commands
+
+## subsetting
+
+keep some columns: Country, Total, S1: Demographic Pressures, P1: State Legitimacy, E2: Economic Inequality into object 'frag23_sub'
+```{r}
+grep(pattern = "Country|S1|P1|E2|Total",x = names(fragility23),fixed = F,value = T) # Search columns names which match the pattern. Basically a test to see what all will be selected
+
+keep=grep("Country|S1|P1|E2|Total",names(fragility23),fixed = F,value = T) # Stores the matching column names in keep 
+frag23_sub=fragility23[,keep] # Creates a new dataset with only the selected columns
+```
+
+## renaming
+
+rename 'frag23_sub' columns, keep var codes only
+```{r}
+names(frag23_sub)[3:5]=c("S1","E2", "P1") # Renames the columns in the new dataset to S1, E2 and P1
+```
+
+## filtering
+
+get me the top ten best countries on the 'E2' measure from 'frag23_sub'
+```{r}
+tail(frag23_sub[order(x=-frag23_sub$E2),],10) # Sorts the rows by E2 in descending order and then displays the last 10 rows (in this case the 10 smallest E2 values)
+```
+
+# some computations
+
+give the statistical description of "frag23_sub"
+```{r}
+summary(object = frag23_sub) # Gives the summary statistics for each column like min, mean, quantile etc
+```
+
+the value of the worst quartile in Total
+```{r}
+q3_Total=quantile(x = frag23_sub$Total, probs = 0.75, na.rm = TRUE)
+q3_Total
+# Computes the 75th percentile of the column Total and stores it in q3_Total
+```
+
+show correlations between "S1","E2", "P1"
+```{r}
+cor(x=frag23_sub[,-c(1,2)]) # Computes a correlation matrix using all columns except column 1 and column 2
+```
+```{r}
+#install.packages("corrtable") # install the corrtable package
+library(corrtable) # load the corrtable package
+corrtable::correlation_matrix(df = frag23_sub[,-c(1,2)]) # Used to create a correlation matrix using all columns except column 1 and column 2
+```
+
+regress P1 and E2 on S1
+```{r}
+lm(S1~P1+E2,data=frag23_sub) # Fits a linear regression model to predict S1 using predictors P1 and E2
+model <- lm(S1 ~ P1 + E2, data = frag23_sub) # Saves the fitted model in an object called model
+summary(model) # Displays the regression summary of the model
+```
+
+# some plotting
+
+give me a plot for the 'P1' variable
+```{r}
+hist(x = frag23_sub$P1) # Creates a histogram of P1 values
+``` 
+
+visual correlation between S1 and E2
+```{r}
+plot(x=frag23_sub$S1, y=frag23_sub$E2) # Creates a scatterplot of S1 vs E2
+```
+
+visual of the regression P1 and E2 on S1
+```{r}
+frag23_sub$Total>=q3_Total # This line returns true when Total >= 75ht percentile and false otherwise
+frag23_sub$worstQt=frag23_sub$Total>=q3_Total # Saves the above logical vector in a column called worseQt
+
+plot(frag23_sub$S1,
+     frag23_sub$E2,pch=20,
+     col = as.factor(frag23_sub$worstQt)) # Scatterplot of S1 vs E2 with color points based on the worstQt group
+```
+
+```{r}
+# install.packages("sjPlot") # install package sjPlot
+library(sjPlot) # load sjPlot for use
+plot_models(model) # Plot the regression model results
+```
+
